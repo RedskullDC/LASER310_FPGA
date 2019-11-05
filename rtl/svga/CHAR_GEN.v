@@ -14,7 +14,8 @@ module CHAR_GEN(
 
 reg		[7:0]	latched_data;
 
-wire	[11:0]	rom_addr = {char_code[7:0], subchar_line[4:1]};	// every line displayed twice
+wire	[11:0]	rom_addr = {char_code[7:0], subchar_line[3:0]};	// every line displayed twice	- 64x32
+//wire	[11:0]	rom_addr = {char_code[7:0], subchar_line[4:1]};	// every line displayed twice	normal
 wire	[7:0]	rom_data;
  
 

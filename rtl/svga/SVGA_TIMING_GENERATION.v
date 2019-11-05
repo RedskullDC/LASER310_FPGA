@@ -55,10 +55,10 @@ output	reg	[9:0]	line_count;			// counts the display lines
 input 							width_64;
 
 // 字符控制
-(*keep*)output	reg	[3:0]	subchar_pixel;		// pixel position within the character						0 to 15
+(*keep*)output	reg	[3:0]	subchar_pixel;		// pixel position within the character								0 to 15
 (*keep*)output	reg	[4:0]	subchar_line;		// identifies the line number within a character block		0 to 31
-(*keep*)output	reg	[6:0]	char_column;		// character number on the current line						0 to 128
-(*keep*)output	reg	[6:0]	char_line;			// line number on the screen								0 to 128
+(*keep*)output	reg	[6:0]	char_column;		// character number on the current line							0 to 128
+(*keep*)output	reg	[6:0]	char_line;			// line number on the screen											0 to 128
 
 // 图形控制 128*64
 (*keep*)output	reg		[8:0]	graph_pixel;
@@ -296,14 +296,14 @@ always @ (posedge h_synch or posedge reset) begin
 		char_line <= 7'd0;
 	end
 	else if(show_line)
-		if(subchar_line == 5'd23)		// 12*2-1
+		//if(subchar_line == 5'd23)		// 12*2-1  normal
+		if(subchar_line == 5'd11)		// 12-1  64x32
 		begin
 			subchar_line <= 5'b00000;
 			char_line <= char_line + 1;
 		end
 		else
-			// increment line counter
-			subchar_line <= subchar_line + 1;
+			subchar_line <= subchar_line + 1;		// increment char line counter
 end
 
 
