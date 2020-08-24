@@ -169,7 +169,7 @@ module tv80_core (/*AUTOARG*/
   reg           NMICycle;
   wire          Inc_PC;
   wire          Inc_WZ;
-  wire [3:0]    IncDec_16;
+  wire [4:0]    IncDec_16;
   wire [1:0]    Prefix;
   wire          Read_To_Acc;
   wire          Read_To_Reg;
@@ -344,9 +344,7 @@ module tv80_core (/*AUTOARG*/
     end // always @ (...
   
           
-  always @(/*AUTOSENSE*/ALU_Q or BusAck or BusB or DI_Reg
-	   or ExchangeRp or IR or Save_ALU_r or Set_Addr_To or XY_Ind
-	   or XY_State or cen or last_tstate or mcycle)
+  always @(/*AUTOSENSE*/ALU_Q or BusAck or BusB or DI_Reg or ExchangeRp or IR or Save_ALU_r or Set_Addr_To or XY_Ind or XY_State or cen or last_tstate or mcycle)
     begin
       ClkEn = cen && ~ BusAck;
 
@@ -928,8 +926,7 @@ module tv80_core (/*AUTOARG*/
     end // always @ (posedge clk)
   
 
-  always @(/*AUTOSENSE*/Alternate or ExchangeDH or IncDec_16
-	   or RegAddrA_r or RegAddrB_r or XY_State or mcycle or tstate)
+  always @(/*AUTOSENSE*/Alternate or ExchangeDH or IncDec_16 or RegAddrA_r or RegAddrB_r or XY_State or mcycle or tstate)
     begin
       if ((tstate[2] || (tstate[3] && mcycle[0] && IncDec_16[2] == 1'b1)) && XY_State == 2'b00)
         RegAddrA = { Alternate, IncDec_16[1:0] };
@@ -949,14 +946,11 @@ module tv80_core (/*AUTOARG*/
     end // always @ *
   
 
-  always @(/*AUTOSENSE*/ALU_Op_r or Auto_Wait_t1 or ExchangeDH
-	   or IncDec_16 or Read_To_Reg_r or Save_ALU_r or mcycle
-	   or tstate or wait_n)
+  always @(/*AUTOSENSE*/ALU_Op_r or Auto_Wait_t1 or ExchangeDH or IncDec_16 or Read_To_Reg_r or Save_ALU_r or mcycle or tstate or wait_n)
     begin
       RegWEH = 1'b0;
       RegWEL = 1'b0;
-      if ((tstate[1] && ~Save_ALU_r && ~Auto_Wait_t1) ||
-          (Save_ALU_r && (ALU_Op_r != 4'b0111)) ) 
+      if ((tstate[1] && ~Save_ALU_r && ~Auto_Wait_t1) || (Save_ALU_r && (ALU_Op_r != 4'b0111)) ) 
         begin
           case (Read_To_Reg_r)
             5'b10000 , 5'b10001 , 5'b10010 , 5'b10011 , 5'b10100 , 5'b10101 :
@@ -979,7 +973,7 @@ module tv80_core (/*AUTOARG*/
       if (IncDec_16[2] && ((tstate[2] && wait_n && ~mcycle[0]) || (tstate[3] && mcycle[0])) ) 
         begin
           case (IncDec_16[1:0])
-            2'b00 , 2'b01 , 2'b10 :
+            2'b00 , 2'b01 , 2'b10 :		// BC, DE, HL
               begin
                 RegWEH = 1'b1;
                 RegWEL = 1'b1;
@@ -990,8 +984,7 @@ module tv80_core (/*AUTOARG*/
     end // always @ *
   
 
-  always @(/*AUTOSENSE*/ExchangeDH or ID16 or IncDec_16 or RegBusA_r
-	   or RegBusB or Save_Mux or mcycle or tstate)
+  always @(/*AUTOSENSE*/ExchangeDH or ID16 or IncDec_16 or RegBusA_r or RegBusB or Save_Mux or mcycle or tstate)
     begin
       RegDIH = Save_Mux;
       RegDIL = Save_Mux;
@@ -1330,12 +1323,11 @@ module tv80_core (/*AUTOARG*/
         end
     end
 
-  always @(/*AUTOSENSE*/BTR_r or DI_Reg or IncDec_16 or JumpE or PC
-	   or RegBusA or RegBusC or SP or tstate)
+  always @(/*AUTOSENSE*/BTR_r or DI_Reg or IncDec_16 or JumpE or PC or RegBusA or RegBusC or SP or tstate)
     begin
       if (JumpE == 1'b1 ) 
         begin
-          PC16_B = { {8{DI_Reg[7]}}, DI_Reg };
+          PC16_B = { {8{DI_Reg[7]}}, DI_Reg };	// sign extend 8 bit jump value
         end 
       else if (BTR_r == 1'b1 ) 
         begin
@@ -1356,18 +1348,24 @@ module tv80_core (/*AUTOARG*/
           // suspect that ID16 and SP16 could be shared
           SP16_A = SP;
           
-          if (IncDec_16[3] == 1'b1)
+          //if (IncDec_16[3] == 1'b1)
+	  if (IncDec_16[4:3] == 2'b01)
             SP16_B = -1;
           else
             SP16_B = 1;
         end
 
-      if (IncDec_16[3])  
+      //if (IncDec_16[3])
+      if (IncDec_16[4:3] == 2'b01)
         ID16_B = -1;
       else
         ID16_B = 1;
 
-      ID16 = RegBusA + ID16_B;
+      if (IncDec_16[4])	// MLT operation
+			ID16 = RegBusA[15:8] * RegBusA[7:0];
+      else
+      	ID16 = RegBusA + ID16_B;
+
       PC16 = PC + PC16_B;
       SP16 = SP16_A + SP16_B;
     end // always @ *

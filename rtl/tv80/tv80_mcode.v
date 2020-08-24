@@ -56,7 +56,7 @@ module tv80_mcode
   output [1:0]          Prefix                  ; // None,BC,ED,DD/FD
   output                Inc_PC                  ;
   output                Inc_WZ                  ;
-  output [3:0]          IncDec_16               ; // BC,DE,HL,SP   0 is inc
+  output [4:0]          IncDec_16               ; // BC,DE,HL,SP   0 is inc
   output                Read_To_Reg             ;
   output                Read_To_Acc             ;
   output [3:0]          Set_BusA_To     ; // B,C,D,E,H,L,DI/DB,A,SP(L),SP(M),0,F
@@ -104,7 +104,7 @@ module tv80_mcode
   reg [1:0]             Prefix                  ; // None,BC,ED,DD/FD
   reg                   Inc_PC                  ;
   reg                   Inc_WZ                  ;
-  reg [3:0]             IncDec_16               ; // BC,DE,HL,SP   0 is inc
+  reg [4:0]             IncDec_16               ; // BC,DE,HL,SP   0 is inc
   reg                   Read_To_Reg             ;
   reg                   Read_To_Acc             ;
   reg [3:0]             Set_BusA_To     ; // B,C,D,E,H,L,DI/DB,A,SP(L),SP(M),0,F
@@ -199,8 +199,7 @@ module tv80_mcode
   reg [2:0] SSS;
   reg [1:0] DPAIR;
   
-  always @ (/*AUTOSENSE*/F or IR or ISet or IntCycle or MCycle
-            or NMICycle)
+  always @ (/*AUTOSENSE*/F or IR or ISet or IntCycle or MCycle or NMICycle)
     begin
       DDD = IR[5:3];
       SSS = IR[2:0];
@@ -218,7 +217,7 @@ module tv80_mcode
       Prefix = 2'b00;
       Inc_PC = 1'b0;
       Inc_WZ = 1'b0;
-      IncDec_16 = 4'b0000;
+      IncDec_16 = 5'b00000;
       Read_To_Acc = 1'b0;
       Read_To_Reg = 1'b0;
       Set_BusB_To = 4'b0000;
@@ -272,13 +271,12 @@ module tv80_mcode
 
             casez (IR)
               // 8 BIT LOAD GROUP
-              8'b01zzzzzz :
+              8'b01zzzzzz :				// 4X => 7X
                 begin
-                  if (IR[5:0] == 6'b110110)
+                  if (IR[5:0] == 6'b110110)		// 76 HALT
                     Halt = 1'b1;
-                  else if (IR[2:0] == 3'b110)
+                  else if (IR[2:0] == 3'b110)		// LD r,(HL)
                     begin
-                      // LD r,(HL)
                       MCycles = 3'b010;
                       if (MCycle[0])
                         Set_Addr_To = aXY;
@@ -288,9 +286,8 @@ module tv80_mcode
                           Read_To_Reg = 1'b1;
                         end
                     end // if (IR[2:0] == 3'b110)
-                  else if (IR[5:3] == 3'b110)
+                  else if (IR[5:3] == 3'b110)		// LD (HL),r
                     begin
-                      // LD (HL),r
                       MCycles = 3'b010;
                       if (MCycle[0])
                         begin
@@ -370,7 +367,7 @@ module tv80_mcode
                       if (MCycle[1])
                         begin
                           Read_To_Acc = 1'b1;
-                          IncDec_16 = 4'b1110;
+                          IncDec_16 = 5'b01110;
                         end
                     end 
                   else 
@@ -440,7 +437,7 @@ module tv80_mcode
                         MCycle[1] :
                           begin
                             Write = 1'b1;
-                            IncDec_16 = 4'b1110;
+                            IncDec_16 = 5'b01110;
                           end
                         default :;
                       endcase // case(MCycle)
@@ -524,7 +521,7 @@ module tv80_mcode
                         MCycle[1] :
                           begin
                             Read_To_Acc = 1'b1;
-                            IncDec_16 = 4'b0110;
+                            IncDec_16 = 5'b00110;
                           end
                         
                         default :;
@@ -578,7 +575,7 @@ module tv80_mcode
                         MCycle[1] :
                           begin
                             Write = 1'b1;
-                            IncDec_16 = 4'b0110;
+                            IncDec_16 = 5'b00110;
                           end
                         default :;
                       endcase
@@ -631,7 +628,7 @@ module tv80_mcode
                     MCycle[0] :
                       begin
                         TStates = 3'b101;
-                        IncDec_16 = 4'b1111;
+                        IncDec_16 = 5'b01111;
                         Set_Addr_To = aSP;
                         if (DPAIR == 2'b11 ) 
                           begin
@@ -647,7 +644,7 @@ module tv80_mcode
                     
                     MCycle[1] :
                       begin
-                        IncDec_16 = 4'b1111;
+                        IncDec_16 = 5'b01111;
                         Set_Addr_To = aSP;
                         if (DPAIR == 2'b11 ) 
                           begin
@@ -677,7 +674,7 @@ module tv80_mcode
                       Set_Addr_To = aSP;
                     MCycle[1] :
                       begin
-                        IncDec_16 = 4'b0111;
+                        IncDec_16 = 5'b00111;
                         Set_Addr_To = aSP;
                         Read_To_Reg = 1'b1;
                         if (DPAIR == 2'b11 ) 
@@ -693,7 +690,7 @@ module tv80_mcode
                     
                     MCycle[2] :
                       begin
-                        IncDec_16 = 4'b0111;
+                        IncDec_16 = 5'b00111;
                         Read_To_Reg = 1'b1;
                         if (DPAIR == 2'b11 ) 
                           begin
@@ -773,7 +770,7 @@ module tv80_mcode
                           Set_Addr_To = aSP;
                         MCycle[1] :
                           begin
-                            IncDec_16 = 4'b0111;
+                            IncDec_16 = 5'b00111;
                             Set_Addr_To = aSP;
                             LDZ = 1'b1;
                           end
@@ -781,7 +778,7 @@ module tv80_mcode
                         MCycle[2] :
                           begin
                             Jump = 1'b1;
-                            IncDec_16 = 4'b0111;
+                            IncDec_16 = 5'b00111;
                             I_RETN = 1'b1;
                             SetEI = 1'b1;
                           end
@@ -813,7 +810,7 @@ module tv80_mcode
                           end
                         MCycle[2] :
                           begin
-                            IncDec_16 = 4'b0111;
+                            IncDec_16 = 5'b00111;
                             Set_Addr_To = aSP;
                             TStates = 3'b100;
                             Write = 1'b1;
@@ -827,7 +824,7 @@ module tv80_mcode
                           end
                         MCycle[4] :
                           begin
-                            IncDec_16 = 4'b1111;
+                            IncDec_16 = 5'b01111;
                             TStates = 3'b101;
                             Write = 1'b1;
                           end
@@ -1012,7 +1009,7 @@ module tv80_mcode
                         MCycle[0] :
                           begin
                             TStates = 3'b101;
-                            IncDec_16 = 4'b1111;
+                            IncDec_16 = 5'b01111;
                             Set_Addr_To = aSP;
                             Set_BusB_To = 4'b1101;
                           end
@@ -1021,7 +1018,7 @@ module tv80_mcode
                           begin
                             TStates = 3'b100;
                             Write = 1'b1;
-                            IncDec_16 = 4'b1111;
+                            IncDec_16 = 5'b01111;
                             Set_Addr_To = aSP;
                             Set_BusB_To = 4'b1100;
                           end
@@ -1045,7 +1042,7 @@ module tv80_mcode
                           begin
                             LDZ = 1'b1;
                             TStates = 3'b101;
-                            IncDec_16 = 4'b1111;
+                            IncDec_16 = 5'b01111;
                             Set_Addr_To = aSP;
                             Set_BusB_To = 4'b1101;
                           end
@@ -1054,7 +1051,7 @@ module tv80_mcode
                           begin
                             TStates = 3'b100;
                             Write = 1'b1;
-                            IncDec_16 = 4'b1111;
+                            IncDec_16 = 5'b01111;
                             Set_Addr_To = aSP;
                             Set_BusB_To = 4'b1100;
                           end
@@ -1134,19 +1131,17 @@ module tv80_mcode
                   endcase // case(MCycle)
                 end // case: 8'b00001001,8'b00011001,8'b00101001,8'b00111001              
               
-              8'b00zz0011 :
+              8'b00zz0011 :				// INC ss
                 begin
-                  // INC ss
                   TStates = 3'b110;
-                  IncDec_16[3:2] = 2'b01;
+                  IncDec_16[4:2] = 3'b001;
                   IncDec_16[1:0] = DPAIR;
                 end
               
-              8'b00zz1011 :
+              8'b00zz1011 :				// DEC ss
                 begin
-                  // DEC ss
                   TStates = 3'b110;
-                  IncDec_16[3:2] = 2'b11;
+                  IncDec_16[4:2] = 3'b011;
                   IncDec_16[1:0] = DPAIR;
                 end
 
@@ -1402,7 +1397,7 @@ module tv80_mcode
                       end
                     MCycle[2] :
                       begin
-                        IncDec_16 = 4'b1111;
+                        IncDec_16 = 5'b01111;
                         Inc_PC = 1'b1;
                         TStates = 3'b100;
                         Set_Addr_To = aSP;
@@ -1412,7 +1407,7 @@ module tv80_mcode
                     MCycle[3] :
                       begin
                         Write = 1'b1;
-                        IncDec_16 = 4'b1111;
+                        IncDec_16 = 5'b01111;
                         Set_Addr_To = aSP;
                         Set_BusB_To = 4'b1100;
                       end
@@ -1443,7 +1438,7 @@ module tv80_mcode
                             LDW = 1'b1;
                             if (is_cc_true(F, IR[5:3]) ) 
                               begin
-                                IncDec_16 = 4'b1111;
+                                IncDec_16 = 5'b01111;	// dec SP
                                 Set_Addr_To = aSP;
                                 TStates = 3'b100;
                                 Set_BusB_To = 4'b1101;
@@ -1457,7 +1452,7 @@ module tv80_mcode
                         MCycle[3] :
                           begin
                             Write = 1'b1;
-                            IncDec_16 = 4'b1111;
+                            IncDec_16 = 5'b01111;	// dec SP
                             Set_Addr_To = aSP;
                             Set_BusB_To = 4'b1100;
                           end
@@ -1473,9 +1468,8 @@ module tv80_mcode
                     end // if (IR[5] == 1'b0 || Mode != 3 )
                 end // case: 8'b11000100,8'b11001100,8'b11010100,8'b11011100,8'b11100100,8'b11101100,8'b11110100,8'b11111100
               
-              8'b11001001  :
+              8'b11001001  :			// RET
                 begin
-                  // RET
                   MCycles = 3'b011;
                   case (1'b1) // MCycle
                     MCycle[0] :
@@ -1486,7 +1480,7 @@ module tv80_mcode
                     
                     MCycle[1] :
                       begin
-                        IncDec_16 = 4'b0111;
+                        IncDec_16 = 5'b00111;	// inc SP
                         Set_Addr_To = aSP;
                         LDZ = 1'b1;
                       end
@@ -1494,7 +1488,7 @@ module tv80_mcode
                     MCycle[2] :
                       begin
                         Jump = 1'b1;
-                        IncDec_16 = 4'b0111;
+                        IncDec_16 = 5'b00111;	// inc SP
                       end
                     
                     default :;
@@ -1629,14 +1623,14 @@ module tv80_mcode
                         
                         MCycle[1] :
                           begin
-                            IncDec_16 = 4'b0111;
+                            IncDec_16 = 5'b00111;
                             Set_Addr_To = aSP;
                             LDZ = 1'b1;
                           end
                         MCycle[2] :
                           begin
                             Jump = 1'b1;
-                            IncDec_16 = 4'b0111;
+                            IncDec_16 = 5'b00111;
                           end
                         default :;
                       endcase
@@ -1651,7 +1645,7 @@ module tv80_mcode
                     MCycle[0] :
                       begin
                         TStates = 3'b101;
-                        IncDec_16 = 4'b1111;
+                        IncDec_16 = 5'b01111;
                         Set_Addr_To = aSP;
                         Set_BusB_To = 4'b1101;
                       end
@@ -1659,7 +1653,7 @@ module tv80_mcode
                     MCycle[1] :
                       begin
                         Write = 1'b1;
-                        IncDec_16 = 4'b1111;
+                        IncDec_16 = 5'b01111;
                         Set_Addr_To = aSP;
                         Set_BusB_To = 4'b1100;
                       end
@@ -1731,7 +1725,7 @@ module tv80_mcode
               //----------------------------------------------------------------------------
               //----------------------------------------------------------------------------
 
-              8'b11001011  :
+              8'b11001011  :			// CB
                 begin
                   if (Mode != 2 ) 
                     begin
@@ -1739,7 +1733,7 @@ module tv80_mcode
                     end
                 end              
 
-              8'b11101101  :
+              8'b11101101  :			// ED
                 begin
                   if (Mode < 2 ) 
                     begin
@@ -1747,7 +1741,7 @@ module tv80_mcode
                     end
                 end
 
-              8'b11011101,8'b11111101  :
+              8'b11011101,8'b11111101  :	// DD, FD
                 begin
                   if (Mode < 2 ) 
                     begin
@@ -1990,6 +1984,15 @@ module tv80_mcode
 	       */
 	      
               // 8 BIT LOAD GROUP
+
+	      // HD64180 extension
+	      8'b01zz1100 :				// MULT ss    ED4C,ED5C,ED6C,ED7C
+                begin
+                  TStates = 3'b101;
+                  IncDec_16[4:2] = 3'b101;		// IncDec_16(4) == 1 invoke multiply
+                  IncDec_16[1:0] = DPAIR;
+                end
+
               8'b01010111  :
                 begin
                   // LD A,I
@@ -2134,7 +2137,7 @@ module tv80_mcode
                     MCycle[0] :
                       begin
                         Set_Addr_To = aXY;
-                        IncDec_16 = 4'b1100; // BC
+                        IncDec_16 = 5'b01100; // BC
                       end
                     
                     MCycle[1] :
@@ -2145,11 +2148,11 @@ module tv80_mcode
                         Set_Addr_To = aDE;
                         if (IR[3] == 1'b0 ) 
                           begin
-                            IncDec_16 = 4'b0110; // IX
+                            IncDec_16 = 5'b00110; // IX
                           end 
                         else 
                           begin
-                            IncDec_16 = 4'b1110;
+                            IncDec_16 = 5'b01110;
                           end
                       end // case: 2
                     
@@ -2160,11 +2163,11 @@ module tv80_mcode
                         Write = 1'b1;
                         if (IR[3] == 1'b0 ) 
                           begin
-                            IncDec_16 = 4'b0101; // DE
+                            IncDec_16 = 5'b00101; // DE
                           end 
                         else 
                           begin
-                            IncDec_16 = 4'b1101;
+                            IncDec_16 = 5'b01101;
                           end
                       end // case: 3
                     
@@ -2186,23 +2189,23 @@ module tv80_mcode
                     MCycle[0] :
                       begin
                         Set_Addr_To = aXY;
-                        IncDec_16 = 4'b1100; // BC
+                        IncDec_16 = 5'b01100; // BC
                       end
                     
                     MCycle[1] :
                       begin
-                        Set_BusB_To = 4'b0110;
+                        Set_BusB_To = 5'b00110;
                         Set_BusA_To[2:0] = 3'b111;
                         ALU_Op = 4'b0111;
                         Save_ALU = 1'b1;
                         PreserveC = 1'b1;
                         if (IR[3] == 1'b0 ) 
                           begin
-                            IncDec_16 = 4'b0110;
+                            IncDec_16 = 5'b00110;
                           end 
                         else 
                           begin
-                            IncDec_16 = 4'b1110;
+                            IncDec_16 = 5'b01110;
                           end
                       end // case: 2
                     
@@ -2408,7 +2411,7 @@ module tv80_mcode
                     
                     MCycle[1] :
                       begin
-                        IncDec_16 = 4'b0111;
+                        IncDec_16 = 5'b00111;
                         Set_Addr_To = aSP;
                         LDZ = 1'b1;
                       end
@@ -2416,7 +2419,7 @@ module tv80_mcode
                     MCycle[2] :
                       begin
                         Jump = 1'b1;
-                        IncDec_16 = 4'b0111;
+                        IncDec_16 = 5'b00111;
                         I_RETN = 1'b1;
                       end
                     
@@ -2499,11 +2502,11 @@ module tv80_mcode
                       begin
                         if (IR[3] == 1'b0 ) 
                           begin
-			    IncDec_16 = 4'b0110;
+			    IncDec_16 = 5'b00110;
                           end 
                         else 
                           begin
-			    IncDec_16 = 4'b1110;
+			    IncDec_16 = 5'b01110;
                           end
                         TStates = 3'b100;
                         Write = 1'b1;
@@ -2542,11 +2545,11 @@ module tv80_mcode
                         Set_Addr_To = aBC;
                         if (IR[3] == 1'b0 ) 
                           begin
-                            IncDec_16 = 4'b0110;
+                            IncDec_16 = 5'b00110;
                           end 
                         else 
                           begin
-                            IncDec_16 = 4'b1110;
+                            IncDec_16 = 5'b01110;
                           end
                       end
                     
@@ -2554,11 +2557,11 @@ module tv80_mcode
                       begin
                         if (IR[3] == 1'b0 ) 
                           begin
-                            IncDec_16 = 4'b0010;
+                            IncDec_16 = 5'b00010;
                           end 
                         else 
                           begin
-                            IncDec_16 = 4'b1010;
+                            IncDec_16 = 5'b01010;
                           end
                         IORQ = 1'b1;
                         Write = 1'b1;
